@@ -2,8 +2,9 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Overlay Valorant - VCT Style</title>
+    <title>Overlay Valorant - Online Sync</title>
     <link href="https://fonts.googleapis.com/css2?family=Blinker:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
     <style>
         :root { --color-t1: #ff4655; --color-t2: #152438; }
 
@@ -26,7 +27,7 @@
         .team-left { position: absolute; left: 320px; display: flex; flex-direction: column; align-items: center; }
         .team-left .logo-box {
             width: 100px; height: 55px; background-color: var(--color-t1);
-            transform: skewX(-15deg); display: flex; justify-content: center; align-items: center;
+            transform: skewX(-15deg); display: flex; justify-content: center; align-items: center; transition: 0.3s;
         }
         .team-left .name-box { background-color: #111; padding: 2px 30px; transform: skewX(-15deg); margin-top: 6px; }
         .team-left .logo-box img, .team-left .name-box span { transform: skewX(15deg); display: block; }
@@ -35,7 +36,7 @@
         .team-right { position: absolute; right: 320px; display: flex; flex-direction: column; align-items: center; }
         .team-right .logo-box {
             width: 100px; height: 55px; background-color: var(--color-t2);
-            transform: skewX(15deg); display: flex; justify-content: center; align-items: center;
+            transform: skewX(15deg); display: flex; justify-content: center; align-items: center; transition: 0.3s;
         }
         .team-right .name-box { background-color: #111; padding: 2px 30px; transform: skewX(15deg); margin-top: 6px; }
         .team-right .logo-box img, .team-right .name-box span { transform: skewX(-15deg); display: block; }
@@ -45,16 +46,20 @@
         .score-box { background-color: #000; width: 70px; height: 50px; display: flex; justify-content: center; align-items: center; }
         .score-box.left { transform: skewX(15deg); }
         .score-box.right { transform: skewX(-15deg); }
-        .score-box.left span { transform: skewX(-15deg); }
-        .score-box.right span { transform: skewX(15deg); }
+        .score-box.left span { transform: skewX(-15deg); transition: 0.3s;}
+        .score-box.right span { transform: skewX(15deg); transition: 0.3s;}
 
         /* --- TEXTOS E IMAGENS --- */
         .logo-box img { height: 45px; width: 45px; object-fit: contain; }
         .name-box span { font-size: 20px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
         .score-box span { font-size: 36px; font-weight: 600; }
+        
+        #conn-status { position: absolute; top: 10px; left: 10px; font-size: 12px; color: rgba(255,255,255,0.3); }
     </style>
 </head>
 <body>
+
+    <div id="conn-status">Aguardando Conexão...</div>
 
     <div class="hud-top">
         <div class="team-left">
@@ -72,9 +77,7 @@
     </div>
 
     <script>
-        let lastT1File = "";
-        let lastT2File = "";
-
+        // Função visual para atualizar os dados
         function updateUI(data) {
             document.getElementById('name-t1').innerText = data.t1_sigla || 'SEN';
             document.getElementById('name-t2').innerText = data.t2_sigla || 'EG';
@@ -91,45 +94,51 @@
 
             const setLogo = (id, fileName) => {
                 const img = document.getElementById(id);
-                img.onerror = function() {
-                    this.onerror = null; 
-                    this.src = 'logos/default.png';
-                };
+                img.onerror = function() { this.onerror = null; this.src = 'logos/default.png'; };
                 img.src = `logos/${clean(fileName)}.png`;
             };
 
-            if (data.t1_file !== lastT1File) {
-                setLogo('logo-t1', data.t1_file);
-                lastT1File = data.t1_file;
-            }
-            if (data.t2_file !== lastT2File) {
-                setLogo('logo-t2', data.t2_file);
-                lastT2File = data.t2_file;
-            }
+            setLogo('logo-t1', data.t1_file);
+            setLogo('logo-t2', data.t2_file);
         }
 
-        // LÓGICA HÍBRIDA
-        const params = new URLSearchParams(window.location.search);
+        // ============================================
+        // LÓGICA DE RECEBIMENTO ONLINE (MQTT WebSockets)
+        // ============================================
         
-        // Se a URL tiver dados (Usuário comum usando o link copiado)
-        if (params.has('t1_sigla')) {
-            updateUI({
-                t1_file: params.get('t1_file'),
-                t1_sigla: params.get('t1_sigla'),
-                t1_score: params.get('t1_score'),
-                t1_color: params.get('t1_color'),
-                t2_file: params.get('t2_file'),
-                t2_sigla: params.get('t2_sigla'),
-                t2_score: params.get('t2_score'),
-                t2_color: params.get('t2_color')
+        // Pega a Sala que está na URL
+        const params = new URLSearchParams(window.location.search);
+        const room = params.get('room');
+
+        if (!room) {
+            document.getElementById('conn-status').innerText = "Erro: Nenhuma Sala definida na URL.";
+        } else {
+            const client = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
+            const topico = 'vlr_overlay_br_' + room;
+
+            client.on('connect', () => {
+                document.getElementById('conn-status').innerText = "Conectado à sala: " + room;
+                // Esconde a mensagem depois de 3 segundos para não poluir a tela
+                setTimeout(() => document.getElementById('conn-status').style.display = 'none', 3000);
+                
+                // Inscreve-se na sala
+                client.subscribe(topico);
             });
-        } 
-        // Se a URL estiver limpa (Você usando o Painel no OBS)
-        else {
-            setInterval(() => {
-                const lastData = localStorage.getItem('vlr_overlay_data');
-                if (lastData) updateUI(JSON.parse(lastData));
-            }, 500);
+
+            // Quando receber a mensagem do painel, atualiza!
+            client.on('message', (topic, message) => {
+                try {
+                    const data = JSON.parse(message.toString());
+                    updateUI(data);
+                } catch (e) {
+                    console.log("Erro ao ler dados", e);
+                }
+            });
+
+            client.on('error', () => {
+                document.getElementById('conn-status').innerText = "Erro de conexão. Tentando reconectar...";
+                document.getElementById('conn-status').style.display = 'block';
+            });
         }
     </script>
 </body>
