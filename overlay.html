@@ -2,46 +2,28 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Overlay Valorant - Online Sync</title>
+    <title>Overlay Valorant - Cloud Sync</title>
     <link href="https://fonts.googleapis.com/css2?family=Blinker:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
     <style>
         :root { --color-t1: #ff4655; --color-t2: #152438; }
 
-        body {
-            margin: 0; padding: 0;
-            background-color: transparent;
-            color: white;
-            font-family: 'Blinker', sans-serif;
-            overflow: hidden;
-            width: 1920px; height: 1080px;
-        }
-
-        .hud-top {
-            position: absolute;
-            top: 25px; left: 0; width: 100%;
-            display: flex; justify-content: center; align-items: flex-start;
-        }
+        body { margin: 0; padding: 0; background-color: transparent; color: white; font-family: 'Blinker', sans-serif; overflow: hidden; width: 1920px; height: 1080px; }
+        .hud-top { position: absolute; top: 25px; left: 0; width: 100%; display: flex; justify-content: center; align-items: flex-start; }
 
         /* --- TIME ESQUERDO --- */
         .team-left { position: absolute; left: 320px; display: flex; flex-direction: column; align-items: center; }
-        .team-left .logo-box {
-            width: 100px; height: 55px; background-color: var(--color-t1);
-            transform: skewX(-15deg); display: flex; justify-content: center; align-items: center; transition: 0.3s;
-        }
+        .team-left .logo-box { width: 100px; height: 55px; background-color: var(--color-t1); transform: skewX(-15deg); display: flex; justify-content: center; align-items: center; transition: background 0.3s; }
         .team-left .name-box { background-color: #111; padding: 2px 30px; transform: skewX(-15deg); margin-top: 6px; }
         .team-left .logo-box img, .team-left .name-box span { transform: skewX(15deg); display: block; }
 
         /* --- TIME DIREITO --- */
         .team-right { position: absolute; right: 320px; display: flex; flex-direction: column; align-items: center; }
-        .team-right .logo-box {
-            width: 100px; height: 55px; background-color: var(--color-t2);
-            transform: skewX(15deg); display: flex; justify-content: center; align-items: center; transition: 0.3s;
-        }
+        .team-right .logo-box { width: 100px; height: 55px; background-color: var(--color-t2); transform: skewX(15deg); display: flex; justify-content: center; align-items: center; transition: background 0.3s; }
         .team-right .name-box { background-color: #111; padding: 2px 30px; transform: skewX(15deg); margin-top: 6px; }
         .team-right .logo-box img, .team-right .name-box span { transform: skewX(-15deg); display: block; }
 
-        /* --- ELEMENTOS CENTRAIS --- */
+        /* --- CENTRO --- */
         .score-center { display: flex; gap: 15px; margin-top: 70px; }
         .score-box { background-color: #000; width: 70px; height: 50px; display: flex; justify-content: center; align-items: center; }
         .score-box.left { transform: skewX(15deg); }
@@ -49,21 +31,20 @@
         .score-box.left span { transform: skewX(-15deg); transition: 0.3s;}
         .score-box.right span { transform: skewX(15deg); transition: 0.3s;}
 
-        /* --- TEXTOS E IMAGENS --- */
         .logo-box img { height: 45px; width: 45px; object-fit: contain; }
         .name-box span { font-size: 20px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
         .score-box span { font-size: 36px; font-weight: 600; }
         
-        #conn-status { position: absolute; top: 10px; left: 10px; font-size: 12px; color: rgba(255,255,255,0.3); }
+        #conn-status { position: absolute; top: 10px; left: 10px; font-size: 12px; font-weight: bold; padding: 5px 10px; background: rgba(0,0,0,0.5); border-radius: 4px; }
     </style>
 </head>
 <body>
 
-    <div id="conn-status">Aguardando Conexão...</div>
+    <div id="conn-status" style="color: orange;">Aguardando Conexão...</div>
 
     <div class="hud-top">
         <div class="team-left">
-            <div class="logo-box" id="bg-t1"><img id="logo-t1" src="logos/default.png"></div>
+            <div class="logo-box" id="bg-t1"><img id="logo-t1"></div>
             <div class="name-box"><span id="name-t1">SEN</span></div>
         </div>
         <div class="score-center">
@@ -71,73 +52,69 @@
             <div class="score-box right"><span id="score-t2">0</span></div>
         </div>
         <div class="team-right">
-            <div class="logo-box" id="bg-t2"><img id="logo-t2" src="logos/default.png"></div>
+            <div class="logo-box" id="bg-t2"><img id="logo-t2"></div>
             <div class="name-box"><span id="name-t2">EG</span></div>
         </div>
     </div>
 
     <script>
-        // Função visual para atualizar os dados
+        // O Escudo Reserva gerado via código puro (sem precisar de arquivos)
+        const fallbackLogo = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23222'/><text x='50%' y='55%' fill='%23666' font-size='50' font-family='Arial' font-weight='bold' text-anchor='middle' dominant-baseline='middle'>?</text></svg>";
+
+        // Aplica o escudo reserva imediatamente para não ficar com a imagem "quebrada" antes dos dados chegarem
+        document.getElementById('logo-t1').src = fallbackLogo;
+        document.getElementById('logo-t2').src = fallbackLogo;
+
         function updateUI(data) {
             document.getElementById('name-t1').innerText = data.t1_sigla || 'SEN';
             document.getElementById('name-t2').innerText = data.t2_sigla || 'EG';
             document.getElementById('score-t1').innerText = data.t1_score || '0';
             document.getElementById('score-t2').innerText = data.t2_score || '0';
-
+            
             document.documentElement.style.setProperty('--color-t1', data.t1_color || '#ff4655');
             document.documentElement.style.setProperty('--color-t2', data.t2_color || '#152438');
 
-            const clean = (n) => {
-                if (!n) return 'default';
-                return n.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '');
-            };
+            // Carrega as imagens da internet enviadas pelo painel
+            const imgT1 = document.getElementById('logo-t1');
+            imgT1.onerror = () => { imgT1.onerror = null; imgT1.src = fallbackLogo; };
+            imgT1.src = data.t1_logo || fallbackLogo;
 
-            const setLogo = (id, fileName) => {
-                const img = document.getElementById(id);
-                img.onerror = function() { this.onerror = null; this.src = 'logos/default.png'; };
-                img.src = `logos/${clean(fileName)}.png`;
-            };
-
-            setLogo('logo-t1', data.t1_file);
-            setLogo('logo-t2', data.t2_file);
+            const imgT2 = document.getElementById('logo-t2');
+            imgT2.onerror = () => { imgT2.onerror = null; imgT2.src = fallbackLogo; };
+            imgT2.src = data.t2_logo || fallbackLogo;
         }
 
-        // ============================================
-        // LÓGICA DE RECEBIMENTO ONLINE (MQTT WebSockets)
-        // ============================================
-        
-        // Pega a Sala que está na URL
+        // Conexão e Recebimento de Dados
         const params = new URLSearchParams(window.location.search);
         const room = params.get('room');
+        const statusBox = document.getElementById('conn-status');
 
         if (!room) {
-            document.getElementById('conn-status').innerText = "Erro: Nenhuma Sala definida na URL.";
+            statusBox.innerText = "❌ Erro: Nenhuma Sala na URL.";
+            statusBox.style.color = "#ff4655";
         } else {
             const client = mqtt.connect('wss://broker.emqx.io:8084/mqtt');
-            const topico = 'vlr_overlay_br_' + room;
-
+            
             client.on('connect', () => {
-                document.getElementById('conn-status').innerText = "Conectado à sala: " + room;
-                // Esconde a mensagem depois de 3 segundos para não poluir a tela
-                setTimeout(() => document.getElementById('conn-status').style.display = 'none', 3000);
+                statusBox.innerText = "🟢 Conectado (Sala: " + room + ")";
+                statusBox.style.color = "#0f0";
+                setTimeout(() => statusBox.style.display = 'none', 3000); // Esconde após 3 segundos
                 
-                // Inscreve-se na sala
-                client.subscribe(topico);
+                client.subscribe('vlr_overlay_br_' + room);
             });
 
-            // Quando receber a mensagem do painel, atualiza!
             client.on('message', (topic, message) => {
-                try {
-                    const data = JSON.parse(message.toString());
-                    updateUI(data);
-                } catch (e) {
-                    console.log("Erro ao ler dados", e);
+                try { 
+                    updateUI(JSON.parse(message.toString())); 
+                } catch(e){
+                    console.error("Erro ao ler dados da sala", e);
                 }
             });
 
             client.on('error', () => {
-                document.getElementById('conn-status').innerText = "Erro de conexão. Tentando reconectar...";
-                document.getElementById('conn-status').style.display = 'block';
+                statusBox.style.display = 'block';
+                statusBox.innerText = "🔴 Desconectado. Tentando reconectar...";
+                statusBox.style.color = "orange";
             });
         }
     </script>
