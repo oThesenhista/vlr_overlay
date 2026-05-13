@@ -14,13 +14,13 @@
         /* --- TIME ESQUERDO --- */
         .team-left { position: absolute; left: 320px; display: flex; flex-direction: column; align-items: center; }
         .team-left .logo-box { width: 100px; height: 55px; background-color: var(--color-t1); transform: skewX(-15deg); display: flex; justify-content: center; align-items: center; transition: background 0.3s; }
-        .team-left .name-box { background-color: #111; padding: 2px 30px; transform: skewX(-15deg); margin-top: 6px; }
+        .team-left .name-box { background-color: #111; border-top: 3px solid var(--color-t1); min-width: 30px; padding: 2px 30px; transform: skewX(-15deg); margin-top: 6px;  margin-left:100px;}
         .team-left .logo-box img, .team-left .name-box span { transform: skewX(15deg); display: block; }
 
         /* --- TIME DIREITO --- */
         .team-right { position: absolute; right: 320px; display: flex; flex-direction: column; align-items: center; }
         .team-right .logo-box { width: 100px; height: 55px; background-color: var(--color-t2); transform: skewX(15deg); display: flex; justify-content: center; align-items: center; transition: background 0.3s; }
-        .team-right .name-box { background-color: #111; padding: 2px 30px; transform: skewX(15deg); margin-top: 6px; }
+        .team-right .name-box { background-color: #111; border-top: 3px solid var(--color-t2); min-width: 30px; padding: 2px 30px; transform: skewX(15deg); margin-top: 6px; margin-left:-100px;}
         .team-right .logo-box img, .team-right .name-box span { transform: skewX(-15deg); display: block; }
 
         /* --- CENTRO --- */
@@ -44,16 +44,16 @@
 
     <div class="hud-top">
         <div class="team-left">
-            <div class="logo-box" id="bg-t1"><img id="logo-t1"></div>
             <div class="name-box"><span id="name-t1">SEN</span></div>
+            <div class="logo-box" id="bg-t1"><img id="logo-t1"></div>
         </div>
         <div class="score-center">
             <div class="score-box left"><span id="score-t1">0</span></div>
             <div class="score-box right"><span id="score-t2">0</span></div>
         </div>
         <div class="team-right">
-            <div class="logo-box" id="bg-t2"><img id="logo-t2"></div>
             <div class="name-box"><span id="name-t2">EG</span></div>
+            <div class="logo-box" id="bg-t2"><img id="logo-t2"></div> 
         </div>
     </div>
 
