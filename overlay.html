@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Overlay Valorant - VCT Style</title>
+    <link href="https://fonts.googleapis.com/css2?family=Blinker:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-t1: #ff4655;
+            --color-t2: #152438;
+        }
+
+        body {
+            margin: 0; padding: 0;
+            background-color: transparent;
+            color: white;
+            font-family: 'Blinker', sans-serif;
+            overflow: hidden;
+            width: 1920px; height: 1080px;
+        }
+
+        .hud-top {
+            position: absolute;
+            top: 25px; left: 0; width: 100%;
+            display: flex; justify-content: center; align-items: flex-start;
+        }
+
+        /* --- TIME ESQUERDO (Inclinado para Esquerda) --- */
+        .team-left {
+            position: absolute; left: 320px;
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        .team-left .logo-box {
+            width: 100px; height: 55px;
+            background-color: var(--color-t1);
+            transform: skewX(-15deg);
+            display: flex; justify-content: center; align-items: center;
+        }
+
+        .team-left .name-box {
+            background-color: #111;
+            padding: 2px 30px;
+            transform: skewX(-15deg);
+            margin-top: 6px;
+        }
+
+        .team-left .logo-box img, .team-left .name-box span {
+            transform: skewX(15deg); /* Desfaz a inclinação para o conteúdo */
+            display: block;
+        }
+
+        /* --- TIME DIREITO (Inclinado para Direita) --- */
+        .team-right {
+            position: absolute; right: 320px;
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        .team-right .logo-box {
+            width: 100px; height: 55px;
+            background-color: var(--color-t2);
+            transform: skewX(15deg);
+            display: flex; justify-content: center; align-items: center;
+        }
+
+        .team-right .name-box {
+            background-color: #111;
+            padding: 2px 30px;
+            transform: skewX(15deg);
+            margin-top: 6px;
+        }
+
+        .team-right .logo-box img, .team-right .name-box span {
+            transform: skewX(-15deg); /* Desfaz a inclinação para o conteúdo */
+            display: block;
+        }
+
+        /* --- ELEMENTOS CENTRAIS --- */
+        .score-center {
+            display: flex; gap: 15px; margin-top: 70px;
+        }
+
+        .score-box {
+            background-color: #000;
+            width: 70px; height: 50px;
+            display: flex; justify-content: center; align-items: center;
+        }
+
+        .score-box.left { transform: skewX(15deg); }
+        .score-box.right { transform: skewX(-15deg); }
+
+        .score-box.left span { transform: skewX(-15deg); }
+        .score-box.right span { transform: skewX(15deg); }
+
+        /* --- TEXTOS E IMAGENS --- */
+        .logo-box img {
+            height: 45px; width: 45px; object-fit: contain;
+        }
+
+        .name-box span {
+            font-size: 20px; font-weight: 600;
+            letter-spacing: 1px; text-transform: uppercase;
+        }
+
+        .score-box span {
+            font-size: 36px; font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="hud-top">
+        <div class="team-left">
+            <div class="logo-box" id="bg-t1">
+                <img id="logo-t1" src="logos/default.png" onerror="this.src='logos/default.png'">
+            </div>
+            <div class="name-box">
+                <span id="name-t1">SEN</span>
+            </div>
+        </div>
+
+        <div class="score-center">
+            <div class="score-box left">
+                <span id="score-t1">0</span>
+            </div>
+            <div class="score-box right">
+                <span id="score-t2">0</span>
+            </div>
+        </div>
+
+        <div class="team-right">
+            <div class="logo-box" id="bg-t2">
+                <img id="logo-t2" src="logos/default.png" onerror="this.src='logos/default.png'">
+            </div>
+            <div class="name-box">
+                <span id="name-t2">EG</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    const bc = new BroadcastChannel('valorant_sync');
+
+    function updateUI(data) {
+        // Textos e Placares
+        document.getElementById('name-t1').innerText = data.t1_sigla || 'SEN';
+        document.getElementById('name-t2').innerText = data.t2_sigla || 'EG';
+        document.getElementById('score-t1').innerText = data.t1_score || '0';
+        document.getElementById('score-t2').innerText = data.t2_score || '0';
+
+        // Cores
+        document.documentElement.style.setProperty('--color-t1', data.t1_color || '#ff4655');
+        document.documentElement.style.setProperty('--color-t2', data.t2_color || '#152438');
+
+        // Limpeza do nome do arquivo
+        const clean = (n) => {
+            if (!n) return 'default';
+            return n.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, '');
+        };
+
+        // Função segura para carregar a imagem e usar o default se der erro
+        const setLogo = (id, fileName) => {
+            const img = document.getElementById(id);
+            // Se a imagem não for encontrada na pasta, roda esta função
+            img.onerror = function() {
+                this.onerror = null; // Evita loop infinito caso o default também não exista
+                this.src = 'logos/default.png';
+            };
+            img.src = `logos/${clean(fileName)}.png`;
+        };
+
+        setLogo('logo-t1', data.t1_file);
+        setLogo('logo-t2', data.t2_file);
+    }
+
+    // 1. TENTA LER VIA LINK (Se você estiver usando o configurador antigo)
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('t1_file')) {
+        updateUI({
+            t1_file: params.get('t1_file'),
+            t1_sigla: params.get('t1_name') || params.get('t1_sigla'), // Aceita t1_name ou t1_sigla
+            t1_score: params.get('t1_score'),
+            t1_color: params.get('t1_color'),
+            t2_file: params.get('t2_file'),
+            t2_sigla: params.get('t2_name') || params.get('t2_sigla'),
+            t2_score: params.get('t2_score'),
+            t2_color: params.get('t2_color')
+        });
+    } 
+    // 2. SE NÃO TIVER LINK, TENTA LER DO CACHE TEMPO REAL
+    else {
+        const lastData = localStorage.getItem('vlr_overlay_data');
+        if (lastData) {
+            updateUI(JSON.parse(lastData));
+        }
+    }
+
+    // 3. FICA ESCUTANDO MUDANÇAS EM TEMPO REAL DO NOVO CONFIGURADOR
+    bc.onmessage = (ev) => {
+        updateUI(ev.data);
+    };
+</script>
+</body>
+</html>
