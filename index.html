@@ -62,7 +62,7 @@
 
         <div class="grid">
             <div class="team-section">
-                <h3 style="margin-top: 0; color: #ff4655;">TIME ESQUERDA</h3>
+                <h3 style="margin-top: 0; color: #16e28a;">TIME ESQUERDA</h3>
                 
                 <div class="form-group">
                     <label>Buscar Time no VLR.gg:</label>
@@ -80,11 +80,11 @@
 
                 <div class="form-group"><label>Sigla Overlay:</label><input type="text" id="t1_sigla" value="SEN"></div>
                 <div class="form-group"><label>Rounds:</label><input type="number" id="t1_score" value="0"></div>
-                <div class="form-group"><label>Cor da Base:</label><input type="color" id="t1_color" value="#ff4655"></div>
+                <div class="form-group"><label>Cor da Base:</label><input type="color" id="t1_color" value="#16e28a"></div>
             </div>
 
             <div class="team-section">
-                <h3 style="margin-top: 0; color: #152438;">TIME DIREITA</h3>
+                <h3 style="margin-top: 0; color: #f21941;">TIME DIREITA</h3>
                 
                 <div class="form-group">
                     <label>Buscar Time no VLR.gg:</label>
@@ -102,7 +102,7 @@
 
                 <div class="form-group"><label>Sigla Overlay:</label><input type="text" id="t2_sigla" value="EG"></div>
                 <div class="form-group"><label>Rounds:</label><input type="number" id="t2_score" value="0"></div>
-                <div class="form-group"><label>Cor da Base:</label><input type="color" id="t2_color" value="#152438"></div>
+                <div class="form-group"><label>Cor da Base:</label><input type="color" id="t2_color" value="#f21941"></div>
             </div>
         </div>
 
@@ -209,13 +209,13 @@
                     statusLabel.style.color = "#0f0";
                 } else {
                     statusLabel.innerText = "❌ Sem logo oficial no VLR.";
-                    statusLabel.style.color = "#ff4655";
+                    statusLabel.style.color = "#16e28a";
                 }
 
             } catch (error) {
                 console.error(error);
                 statusLabel.innerText = "❌ Erro ao ler dados.";
-                statusLabel.style.color = "#ff4655";
+                statusLabel.style.color = "#f21941";
             }
         }
 

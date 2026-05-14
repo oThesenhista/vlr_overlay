@@ -6,28 +6,34 @@
     <link href="https://fonts.googleapis.com/css2?family=Blinker:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
     <style>
-        :root { --color-t1: #ff4655; --color-t2: #152438; }
+        :root { --color-t1: #16e28a; --color-t2: #f21941; }
 
         body { margin: 0; padding: 0; background-color: transparent; color: white; font-family: 'Blinker', sans-serif; overflow: hidden; width: 1920px; height: 1080px; }
         .hud-top { position: absolute; top: -5px; left: 0; width: 100%; display: flex; justify-content: center; align-items: flex-start; }
 
         /* --- TIME ESQUERDO --- */
-        .team-left { position: absolute; left: 320px; display: flex; flex-direction: column; align-items: center; }
-        .team-left .logo-box { width: 100px; height: 55px; background-color: var(--color-t1); transform: skewX(-15deg); display: flex; justify-content: center; align-items: center; transition: background 0.3s; }
-        .team-left .name-box { background-color: #111; border-top: 3px solid var(--color-t1); min-width: 30px; padding: 2px 30px; transform: skewX(-15deg); margin-top: 6px;  margin-left:100px;}
+        .team-left { position: absolute; left: 330px; display: flex; flex-direction: column; align-items: center; }
+        
+        /* Aplicado o Gradiente para a Esquerda */
+        .team-left .logo-box { width: 150px; height: 55px; padding-left: 10px; margin-top: -5px; z-index: 0; background: linear-gradient(to right, var(--color-t1) 0%, transparent 100%); transform: skewX(-15deg); display: flex; justify-content: left; align-items: center; transition: background 0.3s; }
+        
+        .team-left .name-box { background-color: #111; z-index: 1; border-top: 3px solid var(--color-t1); min-width: 30px; padding: 0px 30px; transform: skewX(-15deg); margin-top: 6px;  margin-left:100px;}
         .team-left .logo-box img, .team-left .name-box span { transform: skewX(15deg); display: block; }
 
         /* --- TIME DIREITO --- */
-        .team-right { position: absolute; right: 320px; display: flex; flex-direction: column; align-items: center; }
-        .team-right .logo-box { width: 100px; height: 55px; background-color: var(--color-t2); transform: skewX(15deg); display: flex; justify-content: center; align-items: center; transition: background 0.3s; }
-        .team-right .name-box { background-color: #111; border-top: 3px solid var(--color-t2); min-width: 30px; padding: 2px 30px; transform: skewX(15deg); margin-top: 6px; margin-left:-100px;}
+        .team-right { position: absolute; right: 350px; display: flex; flex-direction: column; align-items: center; }
+        
+        /* Aplicado o Gradiente para a Direita */
+        .team-right .logo-box { width: 150px; height: 55px; padding-right: 10px; margin-top: -5px; background: linear-gradient(to left, var(--color-t2) 0%, transparent 100%); transform: skewX(15deg); display: flex; justify-content: right; align-items: center; transition: background 0.3s; }
+        
+        .team-right .name-box { background-color: #111; z-index: 1; border-top: 3px solid var(--color-t2); min-width: 30px; padding: 0px 30px; transform: skewX(15deg); margin-top: 6px; margin-left:-100px;}
         .team-right .logo-box img, .team-right .name-box span { transform: skewX(-15deg); display: block; }
 
         /* --- CENTRO --- */
-        .score-center { display: flex; gap: 15px; margin-top: 70px; }
-        .score-box { background-color: #000; width: 70px; height: 50px; display: flex; justify-content: center; align-items: center; }
-        .score-box.left { transform: skewX(15deg); }
-        .score-box.right { transform: skewX(-15deg); }
+        .score-center { display: flex; gap: 55px; margin-top: 70px; }
+        .score-box { background-color: #0d1018; width: 70px; height: 40px; padding-bottom: 5px; display: flex;  }
+        .score-box.left { transform: skewX(15deg); background: linear-gradient(to left, #0d1018 30%, transparent 100%); justify-content: right; align-items: right; padding-right: 10px; border-right: 3px solid var(--color-t1);}
+        .score-box.right { transform: skewX(-15deg); background: linear-gradient(to right, #0d1018 30%, transparent 100%); justify-content: left; align-items: left; padding-left: 10px; border-left: 3px solid var(--color-t2);}
         .score-box.left span { transform: skewX(-15deg); transition: 0.3s;}
         .score-box.right span { transform: skewX(15deg); transition: 0.3s;}
 
